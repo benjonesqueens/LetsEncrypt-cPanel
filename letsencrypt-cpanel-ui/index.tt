@@ -1,0 +1,195 @@
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+	<style>
+		#icon-{
+			font-size: 0px;
+			vertical-align: top;
+		}
+		#icon- img{
+			display: inline-block;
+			vertical-align: top;
+			height: 30px;
+			margin-top: 3px;
+			width: 30px;
+		}
+		.whm-58-heading {
+			font-family: 'Open Sans',sans-serif;
+			text-align: left;
+			text-transform: uppercase;
+			font-weight: normal;
+			background-color: rgba(41,58,74,.95);
+			color: #fff;
+			font-size: 14px;
+			margin-bottom: 0;
+			border-radius: 4px 4px 0 0;
+			border-bottom: none;
+		}
+		
+		.whm-58-subheading {
+			border-radius: 0 0 4px 4px;
+			border-top: none;
+		}
+		
+		.whm-58-subheading > .panel-heading {
+			line-height: 48px;
+		}
+	</style>
+
+	<div class="section">
+		<h2 id="hdrCertificates">Manage Let's Encrypt SSL Certificates</h2>
+		<p id="descSelfsigned" class="description">Use this form to generate a new Let's Encrypt certificate for your domain. Typically, Let's Encrypt certificates are used for development or non-comercial related websites, until you receive a trusted SSL certificate from your SSL certificate authority.</p>
+		
+	      	[% IF message %]
+	      		<div class="alert alert-[% status %] alert-dismissible">
+				<div class="text-center">
+		  			[% message %]
+				</div>
+	      		</div>
+	     	[% END %]
+		
+		<div class="clearfix">
+          		<div class="btn pull-right">
+            			<a href="#" class="btn btn-info btn-mini" data-toggle="modal" data-target="#install">
+              				<span class="fa fa-chain fa-sm"></span> New SSL Certificate
+            			</a>
+          		</div>
+        	</div>
+        	<div class="clearfix">
+          		<table class="table" id="example">
+            			<thead>
+              				<tr>
+						<th>Domain</th>
+						<th>Alternative Domains</th>
+						<th>Provider</th>
+						<th>Expiry Date</th>
+						<th>Days Left</th>
+              				</tr>
+            			</thead>
+            			<tbody>
+				    [% FOREACH account IN installd_domains.keys.sort %]
+				      [% IF installd_domains.$account.status == 'Expired' %]
+					<tr class="text-danger">
+				      [% ELSE %]
+					<tr class="text-info">
+				      [% END %]
+					<td>[% account %]</td>
+					<td>[% installd_domains.$account.domains.join('</br>') %]</td>
+					<td>[% installd_domains.$account.issuer_organizationName %]</td>
+					<td>[% format_time(installd_domains.$account.not_after) %]</td>
+					<td>[% installd_domains.$account.daysleft %]</td>
+				      </tr>
+				    [% END %]
+           			</tbody>
+          		</table>
+        	</div>
+	</div>
+
+    <div class="content">
+      <!-- Modal -->
+      <div class="modal fade" id="install" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title" id="myModalLabel">
+                New SSL Certificate
+              </h4>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+              <form class="form-horizontal" method="POST" role="form">
+                <div class="form-group">
+                  <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
+                  <div class="col-sm-10">
+                    <select class="form-control" name="domain" id="inputdomain3">
+                      <option>Select Domain</option>
+                      [% FOREACH domain IN domains.sort %]
+                      <option>[% domain %]</option>
+                      [% END %]
+                    </select>
+                  </div>
+                   <input type="hidden" name="action" value="install">
+                </div>
+                <div class="form-group domain-aliases">
+                   <label class="col-sm-2 control-label" for="altdomains">Select Alt-Domains</label>
+                   <div class="col-sm-10">
+                     <select class="form-control" name="aliases" id="altdomains" multiple>
+                       <option></option>
+                     </select>
+                     <span class="help-block">
+                        Use CTRL key to select muliple domains.
+                     </span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-default">Submit</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal -->
+    </div>
+  
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script>
+    $(document).ready(function() {
+         $('.domain-aliases').hide();
+         $("#inputdomain3").change(function () {
+           var domain = $(this).val();
+           $('#altdomains').empty();
+           var urllocation = window.location.href;
+           var cpsess = urllocation.match(/(cpsess([0-9]+))/g);
+           var apiurl = '/' + cpsess + '/3rdparty/letsencrypt-cpanel-ui/index.live.pl';
+           $.ajax({
+               url:apiurl,
+               type:'GET',
+               data: 'action=getAliases&domain=' + domain,
+               success: function( json ) {
+                 $('.domain-aliases').show();
+                 $.each(json, function(i, value) {
+                   $('#altdomains').append($('<option>').text(value).attr('value', value));
+                 });
+                 $("#submit").html(' <button type="submit" class="btn btn-default">Submit</button>');
+               },
+               beforeSend: function() {
+                 $("#submit").html('<i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>');
+               },
+               
+           });
+         });
+    })
+  </script>
+  [% IF (theme == 'paper_lantern') %]
+    <script type="text/javascript">
+  	$("#sidebar_home").prop("href", "[% base_url %]index.html");
+	$("#sidebar_user_manager").prop("href", "[% base_url %]user_manager/index.html");
+        $("#lnkHeaderHome").prop("href", "[% base_url %]index.html");
+        $("#lnkQuickHome").prop("href", "[% base_url %]index.html");
+        $("#lnkQuickDomains").prop("href", "[% base_url %]addon/index.html");
+        $("#lnkQuickFilemgr").prop("href", "[% base_url %]filemanager/index.html?showhidden=1&dir=/public_html");
+        $("#lnkQuickEmail").prop("href",   "[% base_url %]mail/pops.html");
+        $("#lnkUserPrefChangePwd").prop("href", "[% base_url %]passwd/index.html");
+        $("#lnkUserPrefChangeLang").prop("href", "[% base_url %]setlang/index.html");
+        $("#lnkUserPrefChangeStyle").prop("href", "[% base_url %]styleswitcher/index.html");
+        $("#lnkUserPrefUpdateContactInfo").prop("href", "[% base_url %]contact/index.html");
+        $("#lnkFooterHome").prop("href", "[% base_url %]index.html");
+        $("#lnkFooterTrademark").prop("href", "[% base_url %]trademarks.html");
+        $("#lnkFooterContact").prop("href", "[% base_url %]contact/contactinfo.html");
+        $("#lnkMenu").prop("href", "[% base_url %]index.html");
+        $("#lnkStats").prop("href", "[% base_url %]home/statistics.html");
+        $("#lnkDashboard").prop("href", "[% base_url %]home/dashboard.html");
+        $("#lnkHeaderNotifications").prop("href", "[% base_url %]home/notifications.html.tt");
+        $("#lnkUserManager").prop("href", "[% base_url %]user_manager/index.html");
+        $("#icon-").html('<img src="img/icon.png" alt="" />');
+   </script>
+ [% END %]

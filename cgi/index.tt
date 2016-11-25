@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Let's Encrypt</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+  <div class="navbar navbar-default navbar-fixed">
+    <div class="container">
+      <p class="navbar-text pull-left">Let's Encrypt</p>
+	<a href="javascript:history.back();" class="navbar-btn btn-info btn pull-right"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back</a>
+    </div>
+  </div>
+  <div class="container">
+    <div class="content">
+      <style>
+        	.whm-58-heading {
+    			font-family: 'Open Sans',sans-serif;
+    			text-align: left;
+    			text-transform: uppercase;
+    			font-weight: normal;
+    			background-color: rgba(41,58,74,.95);
+    			color: #fff;
+    			font-size: 14px;
+    			margin-bottom: 0;
+    			border-radius: 4px 4px 0 0;
+    			border-bottom: none;
+    		}
+    		
+    		.whm-58-subheading {
+    			border-radius: 0 0 4px 4px;
+    			border-top: none;
+    		}
+    				
+    		.whm-58-subheading > .panel-heading {
+    			line-height: 48px;
+    		}
+      </style>
+      <legend class="well text-center text-warning whm-58-heading"> Manage Let's Encrypt SSL Certificate</legend>
+      <div class="panel panel-default whm-58-subheading">
+        <div class="panel-heading clearfix">
+          <strong>SSL Enabled Domains</strong>
+          <div class="btn pull-right">
+            <a href="#" class="btn btn-success btn-mini" data-toggle="modal" data-target="#service">
+              <span class="fa fa-chain fa-sm"></span>
+              New Certificate for WHM Services
+            </a>
+            <a href="#" class="btn btn-info btn-mini" data-toggle="modal" data-target="#install">
+              <span class="fa fa-chain fa-sm"></span>
+              New Certificate for Domain
+            </a>
+          </div>
+        </div>
+        [% IF message %]
+          <div class="alert alert-[% status %] alert-dismissible">
+            <div class="text-center">
+              [% message %]
+            </div>
+          </div>
+        [% END %]
+        <div class="panel-body">
+          <table class="table" id="example">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Alternative Domains</th>
+                <th>Provider</th>
+                <th>Expiry Date</th>
+                <th>Days Left</th>
+              </tr>
+            </thead>
+            <tbody>
+            [% FOREACH account IN installd_domains.keys.sort %]
+              [% IF installd_domains.$account.status == 'Expired' %]
+                <tr class="text-danger">
+              [% ELSE %]
+                <tr class="text-info">
+              [% END %]
+                <td>[% account %]</td>
+                <td>[% installd_domains.$account.domains.join('</br>') %]</td>
+                <td>[% installd_domains.$account.issuer_organizationName %]</td>
+                <td>[% format_time(installd_domains.$account.not_after) %]</td>
+                <td>[% installd_domains.$account.daysleft %]</td>
+              </tr>
+            [% END %]
+           </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Modal -->
+      <div class="modal fade" id="service" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title" id="myModalLabel">
+                Install certificate on whm/cpanel/webmail services 
+              </h4>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+              <form class="form-horizontal" role="form">
+                <div class="form-group">
+                  <label class="col-sm-2 control-label" for="inputdomain3">Services</label>
+                  <div class="col-sm-10">
+                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="cpanel">WHM/cPanel</label>
+                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="exim">Exim</label>
+                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="ftp">FTP</label>
+                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="dovecot">Dovecot</label>
+                  </div>
+                   <input type="hidden" name="action" value="service">
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-default">Submit</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>  
+      <!-- Modal -->
+      <div class="modal fade" id="install" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title" id="myModalLabel">
+                Install SSL certificate
+              </h4>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+              <form class="form-horizontal" role="form">
+                <div class="form-group">
+                  <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
+                  <div class="col-sm-10">
+                    <select class="form-control" name="domain" id="inputdomain3">
+                      [% FOREACH domain IN domains.sort %]
+                      <option>[% domain %]</option>
+                      [% END %]
+                    </select>
+                  </div>
+                  <input type="hidden" name="action" value="install"> 
+                 </div>
+                <div class="form-group domain-aliases">
+                   <label class="col-sm-2 control-label" for="altdomains">Select Alt-Domains</label>
+                   <div class="col-sm-10">
+                     <select class="form-control" name="aliases" id="altdomains" multiple>
+                       <option></option>
+                     </select>
+                   </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-2 col-sm-10" id="submit">
+                    <button type="submit" class="btn btn-default">Submit</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal -->
+    </div>
+  </div>
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script>
+    $(document).ready(function() {
+         $('.domain-aliases').hide();
+         $("#inputdomain3").change(function () {
+           var domain = $(this).val();
+           var urllocation = window.location.href;
+           var cpsess = urllocation.match(/(cpsess([0-9]+))/g);
+           var apiurl = '/' + cpsess + '/cgi/letsencrypt/letsencrypt.pl';
+           $('#altdomains').empty();
+           $.ajax({
+               url:apiurl,
+               type:'GET',
+               data: 'action=getAliases&domain=' + domain,
+               success: function( json ) {
+                 $('.domain-aliases').show();
+                 $.each(json, function(i, value) {
+	           $('#altdomains').append($('<option>').text(value).attr('value', value));
+                 });
+                 $("#submit").html(' <button type="submit" class="btn btn-default">Submit</button>');
+               },
+               beforeSend: function() {
+                 $("#submit").html('<i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>');
+               },
+               
+           });
+         });
+    })
+  </script>
+</body>
+</html>
