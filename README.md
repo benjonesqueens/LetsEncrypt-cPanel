@@ -1,6 +1,5 @@
 # Let's Encrypt Plugin for cPanel
 
-[![StyleCI](https://styleci.io/repos/74713288/shield?branch=master)](https://styleci.io/repos/74713288)
 [![Codacy](https://img.shields.io/codacy/grade/f07779f4de8f44b7a67f88f0954a2371/master.svg?style=flat-square)](https://www.codacy.com/app/CyanDarkInc/LetsEncrypt-cPanel?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CyanDarkInc/LetsEncrypt-cPanel&amp;utm_campaign=Badge_Grade)
 
 This is a cPanel/WHM plugin for the [Let's Encrypt](https://letsencrypt.org/) client. This plugin uses Perl and the WHM API, and requires a server running cPanel and WHM on it.
